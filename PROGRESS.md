@@ -26,3 +26,4 @@
 - 2026-09-24 15:05 IST: Update comments in signaling server
 - 2026-09-24 15:10 IST: Code review fixes in ReceivedFiles component
 - 2026-09-24 15:15 IST: Minor cleanup in App component
+- 2026-09-24 15:20 IST: Improve file size formatting helper
