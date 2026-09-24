@@ -1,1 +1,2 @@
 - 2026-09-24 12:50 IST: Minor cleanup in socket event handlers
+- 2026-09-24 12:53 IST: Fix sender/receiver role bug - both tabs were showing Send File

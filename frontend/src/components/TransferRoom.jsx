@@ -12,6 +12,7 @@ const iceConfig = {
 function TransferRoom({ roomId }) {
   const [status, setStatus] = useState("Connecting to server...");
   const [connected, setConnected] = useState(false);
+  const [isSender, setIsSender] = useState(false);
   const [receivedFiles, setReceivedFiles] = useState([]);
 
   const socketRef = useRef(null);
@@ -49,6 +50,7 @@ function TransferRoom({ roomId }) {
 
     socket.on("start-offer", async () => {
       setStatus("Someone joined! Setting up connection...");
+      setIsSender(true);
       const peer = createPeer(socket, roomId);
       peerRef.current = peer;
 
@@ -165,7 +167,7 @@ function TransferRoom({ roomId }) {
     <div>
       <div className="status-bar">{status}</div>
 
-      {connected && (
+      {connected && isSender && (
         <div className="card">
           <SendFile onSend={sendFile} />
         </div>
