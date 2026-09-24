@@ -15,3 +15,4 @@
 - 2026-09-24 14:15 IST: Improve file chunking logic for stability
 - 2026-09-24 14:20 IST: Update progress log and minor tweaks
 - 2026-09-24 14:25 IST: Refactor ICE candidate handling
+- 2026-09-24 14:30 IST: Minor cleanup in room disconnect logic
