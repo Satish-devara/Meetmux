@@ -7,3 +7,4 @@
 - 2026-09-24 13:41 IST: Improve file chunking logic for large file transfers
 - 2026-09-24 13:44 IST: Code review fixes and cleanup across all files
 - 2026-09-24 13:45 IST: Update comments and clean up variable names
+- 2026-09-24 13:50 IST: Refactor socket events for better readability
