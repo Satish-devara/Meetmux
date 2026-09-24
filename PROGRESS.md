@@ -29,3 +29,4 @@
 - 2026-09-24 15:20 IST: Improve file size formatting helper
 - 2026-09-24 15:25 IST: Refactor data channel setup logic
 - 2026-09-24 15:30 IST: Minor cleanup in ICE candidate forwarding
+- 2026-09-24 15:35 IST: Update progress log
