@@ -24,3 +24,4 @@
 - 2026-09-24 14:55 IST: Minor cleanup in server disconnect handler
 - 2026-09-24 15:00 IST: Improve error handling for WebRTC offer creation
 - 2026-09-24 15:05 IST: Update comments in signaling server
+- 2026-09-24 15:10 IST: Code review fixes in ReceivedFiles component
