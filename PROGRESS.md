@@ -19,3 +19,4 @@
 - 2026-09-24 14:35 IST: Improve error handling for room full case
 - 2026-09-24 14:38 IST: Update SHA-256 hash verification flow
 - 2026-09-24 14:40 IST: Code review fixes in JoinRoom component
+- 2026-09-24 14:45 IST: Minor cleanup in SendFile component
