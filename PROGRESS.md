@@ -9,3 +9,4 @@
 - 2026-09-24 13:45 IST: Update comments and clean up variable names
 - 2026-09-24 13:50 IST: Refactor socket events for better readability
 - 2026-09-24 13:58 IST: Minor cleanup in peer connection setup
+- 2026-09-24 14:00 IST: Improve error handling on file send failure
