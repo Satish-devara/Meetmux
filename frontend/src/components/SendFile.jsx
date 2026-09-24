@@ -1,52 +1,34 @@
-import { useRef, useState } from "react";
+import { useRef, useState } from "react"
 
 function SendFile({ onSend }) {
-  const fileRef = useRef(null);
-  const [sending, setSending] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [done, setDone] = useState(false);
+  const fileRef = useRef(null)
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState(false)
 
-  async function handleSend() {
-    const file = fileRef.current?.files[0];
-    if (!file) return alert("Pick a file first.");
+  async function handleClick() {
+    let file = fileRef.current?.files[0]
+    if (!file) {
+      alert("pick a file first")
+      return
+    }
 
-    setSending(true);
-    setDone(false);
-    setProgress(0);
-
-    const arrayBuffer = await file.arrayBuffer();
-    const CHUNK_SIZE = 64 * 1024;
-
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-    const hash = Array.from(new Uint8Array(hashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    await onSend(file);
-
-    setProgress(100);
-    setSending(false);
-    setDone(true);
+    setSending(true)
+    setDone(false)
+    await onSend(file)
+    setSending(false)
+    setDone(true)
   }
 
   return (
     <div>
       <h2>Send a File</h2>
       <input type="file" ref={fileRef} />
-      <button onClick={handleSend} disabled={sending}>
-        {sending ? "Sending..." : "Send File"}
+      <button onClick={handleClick} disabled={sending}>
+        {sending ? "sending..." : "Send"}
       </button>
-
-      {sending && (
-        <div>
-          <p className="progress-label">Sending...</p>
-          <progress value={progress} max="100" />
-        </div>
-      )}
-
-      {done && <p className="progress-label" style={{ color: "green" }}>✅ File sent!</p>}
+      {done && <p style={{ marginTop: "10px", color: "green" }}>sent!</p>}
     </div>
-  );
+  )
 }
 
-export default SendFile;
+export default SendFile

@@ -1,173 +1,165 @@
-import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
-import SendFile from "./SendFile";
-import ReceivedFiles from "./ReceivedFiles";
+import { useEffect, useRef, useState } from "react"
+import { io } from "socket.io-client"
+import SendFile from "./SendFile"
+import ReceivedFiles from "./ReceivedFiles"
 
-const CHUNK_SIZE = 64 * 1024;
+const CHUNK = 64 * 1024
 
-const iceConfig = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-};
+const iceServers = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+}
 
 function TransferRoom({ roomId }) {
-  const [status, setStatus] = useState("Connecting to server...");
-  const [connected, setConnected] = useState(false);
-  const [receivedFiles, setReceivedFiles] = useState([]);
+  const [status, setStatus] = useState("connecting...")
+  const [ready, setReady] = useState(false)
+  const [files, setFiles] = useState([])
 
-  const socketRef = useRef(null);
-  const peerRef = useRef(null);
-  const dataChannelRef = useRef(null);
+  const socket = useRef(null)
+  const peer = useRef(null)
+  const ch = useRef(null)
 
-  // incoming file state stored in refs (not state, to avoid stale closures)
-  const incomingMeta = useRef(null);
-  const incomingChunks = useRef([]);
-  const incomingSize = useRef(0);
+  const meta = useRef(null)
+  const chunks = useRef([])
+  const received = useRef(0)
 
   useEffect(() => {
-    const socket = io("http://localhost:3001");
-    socketRef.current = socket;
+    let s = io("http://localhost:3001")
+    socket.current = s
 
-    socket.on("connect", () => {
-      socket.emit("join-room", roomId);
-      setStatus("Waiting for the other person to join...");
-    });
+    s.on("connect", () => {
+      s.emit("join-room", roomId)
+      setStatus("waiting for other person...")
+    })
 
-    socket.on("room-joined", (data) => {
-      if (data.total === 1) {
-        setStatus("You're in the room. Waiting for the other person...");
-      }
-    });
+    s.on("room-joined", (data) => {
+      if (data.total === 1) setStatus("you're in. waiting for someone to join...")
+    })
 
-    socket.on("room-full", () => {
-      alert("Room is full. Only 2 people allowed.");
-    });
+    s.on("room-full", () => alert("room is full!"))
 
-    socket.on("peer-left", () => {
-      setStatus("The other person disconnected.");
-      setConnected(false);
-    });
+    s.on("peer-left", () => {
+      setStatus("other person left")
+      setReady(false)
+    })
 
-    socket.on("start-offer", async () => {
-      setStatus("Someone joined! Setting up connection...");
-      const peer = createPeer(socket, roomId);
-      peerRef.current = peer;
+    s.on("start-offer", async () => {
+      setStatus("someone joined, connecting...")
+      let pc = makePC(s)
+      peer.current = pc
 
-      const channel = peer.createDataChannel("file-transfer");
-      channel.binaryType = "arraybuffer";
-      dataChannelRef.current = channel;
+      let channel = pc.createDataChannel("files")
+      channel.binaryType = "arraybuffer"
+      ch.current = channel
 
       channel.onopen = () => {
-        setStatus("Connected! You can now send files.");
-        setConnected(true);
-      };
+        setStatus("connected!")
+        setReady(true)
+      }
 
-      channel.onmessage = (e) => handleIncomingMessage(e);
+      channel.onmessage = (e) => gotMessage(e)
 
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-      socket.emit("offer", { roomId, offer });
-    });
+      let offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+      s.emit("offer", { roomId, offer })
+    })
 
-    socket.on("offer", async (data) => {
-      setStatus("Connecting...");
-      const peer = createPeer(socket, roomId);
-      peerRef.current = peer;
+    s.on("offer", async (data) => {
+      setStatus("got offer, connecting...")
+      let pc = makePC(s)
+      peer.current = pc
 
-      peer.ondatachannel = (event) => {
-        const channel = event.channel;
-        channel.binaryType = "arraybuffer";
-        dataChannelRef.current = channel;
+      pc.ondatachannel = (e) => {
+        let channel = e.channel
+        channel.binaryType = "arraybuffer"
+        ch.current = channel
+
         channel.onopen = () => {
-          setStatus("Connected! Ready to receive files.");
-          setConnected(true);
-        };
-        channel.onmessage = (e) => handleIncomingMessage(e);
-      };
+          setStatus("connected!")
+          setReady(true)
+        }
 
-      await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-      socket.emit("answer", { roomId, answer });
-    });
-
-    socket.on("answer", async (data) => {
-      await peerRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
-    });
-
-    socket.on("ice-candidate", async (data) => {
-      if (peerRef.current) {
-        await peerRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+        channel.onmessage = (e) => gotMessage(e)
       }
-    });
 
-    return () => socket.disconnect();
-  }, [roomId]);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer))
+      let answer = await pc.createAnswer()
+      await pc.setLocalDescription(answer)
+      s.emit("answer", { roomId, answer })
+    })
 
-  function createPeer(socket, roomId) {
-    const peer = new RTCPeerConnection(iceConfig);
-    peer.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", { roomId, candidate: event.candidate });
+    s.on("answer", async (data) => {
+      await peer.current.setRemoteDescription(new RTCSessionDescription(data.answer))
+    })
+
+    s.on("ice-candidate", async (data) => {
+      if (peer.current) {
+        await peer.current.addIceCandidate(new RTCIceCandidate(data.candidate))
       }
-    };
-    return peer;
+    })
+
+    return () => s.disconnect()
+  }, [roomId])
+
+  function makePC(s) {
+    let pc = new RTCPeerConnection(iceServers)
+    pc.onicecandidate = (e) => {
+      if (e.candidate) s.emit("ice-candidate", { roomId, candidate: e.candidate })
+    }
+    return pc
   }
 
-  async function handleIncomingMessage(event) {
-    if (typeof event.data === "string") {
-      incomingMeta.current = JSON.parse(event.data);
-      incomingChunks.current = [];
-      incomingSize.current = 0;
+  async function gotMessage(e) {
+    if (typeof e.data === "string") {
+      meta.current = JSON.parse(e.data)
+      chunks.current = []
+      received.current = 0
     } else {
-      incomingChunks.current.push(event.data);
-      incomingSize.current += event.data.byteLength;
+      chunks.current.push(e.data)
+      received.current += e.data.byteLength
 
-      if (incomingSize.current >= incomingMeta.current.size) {
-        const meta = incomingMeta.current;
-        const blob = new Blob(incomingChunks.current, { type: meta.type });
+      if (received.current >= meta.current.size) {
+        let m = meta.current
+        let blob = new Blob(chunks.current, { type: m.type })
 
-        const hashBuffer = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
-        const hashHex = Array.from(new Uint8Array(hashBuffer))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
+        let buf = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer())
+        let hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("")
 
-        const verified = hashHex === meta.hash;
-        const url = URL.createObjectURL(blob);
+        let ok = hash === m.hash
+        let url = URL.createObjectURL(blob)
 
-        setReceivedFiles((prev) => [...prev, { name: meta.name, size: meta.size, url, verified }]);
+        setFiles(prev => [...prev, { name: m.name, size: m.size, url, ok }])
       }
     }
   }
 
   async function sendFile(file) {
-    const channel = dataChannelRef.current;
-    if (!channel || channel.readyState !== "open") return alert("Not connected yet.");
-
-    const arrayBuffer = await file.arrayBuffer();
-
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-    const hash = Array.from(new Uint8Array(hashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    channel.send(JSON.stringify({ name: file.name, size: file.size, type: file.type, hash }));
-
-    let offset = 0;
-    while (offset < arrayBuffer.byteLength) {
-      const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE);
-      channel.send(chunk);
-      offset += chunk.byteLength;
-      await new Promise((r) => setTimeout(r, 0));
+    let channel = ch.current
+    if (!channel || channel.readyState !== "open") {
+      alert("not connected yet")
+      return
     }
 
-    return true;
+    let buf = await file.arrayBuffer()
+    let hashBuf = await crypto.subtle.digest("SHA-256", buf)
+    let hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("")
+
+    channel.send(JSON.stringify({ name: file.name, size: file.size, type: file.type, hash }))
+
+    let offset = 0
+    while (offset < buf.byteLength) {
+      channel.send(buf.slice(offset, offset + CHUNK))
+      offset += CHUNK
+      await new Promise(r => setTimeout(r, 0))
+    }
+
+    return true
   }
 
   return (
     <div>
       <div className="status-bar">{status}</div>
 
-      {connected && (
+      {ready && (
         <div className="card">
           <SendFile onSend={sendFile} />
         </div>
@@ -175,14 +167,13 @@ function TransferRoom({ roomId }) {
 
       <div className="card">
         <h2>Received Files</h2>
-        {receivedFiles.length === 0 ? (
-          <p style={{ color: "#888", fontSize: "0.9rem" }}>No files received yet.</p>
-        ) : (
-          <ReceivedFiles files={receivedFiles} />
-        )}
+        {files.length === 0
+          ? <p style={{ color: "#888", fontSize: "0.9rem" }}>nothing received yet</p>
+          : <ReceivedFiles files={files} />
+        }
       </div>
     </div>
-  );
+  )
 }
 
-export default TransferRoom;
+export default TransferRoom
