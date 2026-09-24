@@ -4,3 +4,4 @@
 - 2026-09-24 12:55 IST: Improve error handling for disconnected peers
 - 2026-09-24 13:00 IST: Refactor socket events for cleaner room management
 - 2026-09-24 13:39 IST: Fix bidirectional receive - sender was missing onmessage handler
+- 2026-09-24 13:41 IST: Improve file chunking logic for large file transfers
