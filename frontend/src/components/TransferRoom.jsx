@@ -61,6 +61,8 @@ function TransferRoom({ roomId }) {
         setConnected(true);
       };
 
+      channel.onmessage = (e) => handleIncomingMessage(e);
+
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
       socket.emit("offer", { roomId, offer });

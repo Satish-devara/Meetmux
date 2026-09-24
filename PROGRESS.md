@@ -3,3 +3,4 @@
 - 2026-09-24 12:54 IST: Enable bidirectional file transfer - both peers can send
 - 2026-09-24 12:55 IST: Improve error handling for disconnected peers
 - 2026-09-24 13:00 IST: Refactor socket events for cleaner room management
+- 2026-09-24 13:39 IST: Fix bidirectional receive - sender was missing onmessage handler
