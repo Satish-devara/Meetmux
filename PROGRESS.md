@@ -30,3 +30,6 @@
 - 2026-09-24 15:25 IST: Refactor data channel setup logic
 - 2026-09-24 15:30 IST: Minor cleanup in ICE candidate forwarding
 - 2026-09-24 15:35 IST: Update progress log
+- 2026-09-24 15:40 IST: Redesign UI with modern dark tech theme and enhanced aesthetics
+- 2026-09-24 15:45 IST: Add drag and drop file upload and real-time progress indicators
+- 2026-09-24 15:50 IST: Polish responsive styling and verification status badges
