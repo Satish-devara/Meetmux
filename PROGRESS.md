@@ -11,3 +11,4 @@
 - 2026-09-24 13:58 IST: Minor cleanup in peer connection setup
 - 2026-09-24 14:00 IST: Improve error handling on file send failure
 - 2026-09-24 14:05 IST: Minor cleanup in chunk sending loop
+- 2026-09-24 14:10 IST: Code review fixes in TransferRoom component
