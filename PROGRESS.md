@@ -12,3 +12,4 @@
 - 2026-09-24 14:00 IST: Improve error handling on file send failure
 - 2026-09-24 14:05 IST: Minor cleanup in chunk sending loop
 - 2026-09-24 14:10 IST: Code review fixes in TransferRoom component
+- 2026-09-24 14:15 IST: Improve file chunking logic for stability
